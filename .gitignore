@@ -1,0 +1,12 @@
+# =========================
+# DATA
+# =========================
+
+data/raw/
+data/*
+*.csv
+
+# keep only the sample
+!data/sample/
+!data/sample/**
+

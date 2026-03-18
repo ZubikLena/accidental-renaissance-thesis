@@ -1,0 +1,19 @@
+name: wikiart
+
+save_dir: data/raw/wikiart
+
+movement_urls:
+  - https://www.wikiart.org/en/artists-by-art-movement/early-renaissance
+  - https://www.wikiart.org/en/artists-by-art-movement/high-renaissance
+  - https://www.wikiart.org/en/artists-by-art-movement/northern-renaissance
+  - https://www.wikiart.org/en/artists-by-art-movement/mannerism-late-renaissance
+
+headers:
+  User-Agent: Mozilla/5.0
+
+max_pages_per_artist: 100
+delay: 1
+
+functions:
+  get_items: get_wikiart_items
+  extract_image: extract_wikiart_image

@@ -1,0 +1,21 @@
+name: reddit
+
+save_dir: data/raw/reddit
+
+base_urls:
+  - https://old.reddit.com/r/AccidentalRenaissance/
+  - https://old.reddit.com/r/AccidentalRenaissance/top/?t=all
+  - https://old.reddit.com/r/AccidentalRenaissance/top/?t=year
+  - https://old.reddit.com/r/AccidentalRenaissance/top/?t=month
+  - https://old.reddit.com/r/AccidentalRenaissance/best/
+  - https://old.reddit.com/r/AccidentalRenaissance/hot/
+  - https://old.reddit.com/r/AccidentalRenaissance/new/
+
+max_pages: 80
+
+headers:
+  User-Agent: Mozilla/5.0
+
+functions:
+  get_items: get_reddit_items
+  extract_image: extract_reddit_image

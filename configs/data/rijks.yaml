@@ -1,0 +1,14 @@
+name: rijks
+
+save_dir: data/raw/rijks
+
+search_url: https://data.rijksmuseum.nl/search/collection?type=painting&imageAvailable=true&creationDate=15??
+
+delay: 0.5
+
+headers:
+  User-Agent: Mozilla/5.0
+
+functions:
+  get_items: get_rijks_items
+  extract_image: extract_rijks_image
