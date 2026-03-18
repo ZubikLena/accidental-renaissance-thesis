@@ -6,6 +6,7 @@ This project combines multiple sources to study Renaissance-style visual pattern
 - Source: https://metmuseum.github.io/
 - Description: Open-access dataset of artworks
 - Used for: Renaissance paintings (filtered by date, medium, and department)
+- Size: 586 images
 
 ---
 
@@ -13,6 +14,7 @@ This project combines multiple sources to study Renaissance-style visual pattern
 - Source: https://www.wikiart.org/
 - Description: Online collection of artworks by style and movement
 - Used for: Curated Renaissance paintings (Early, High, Northern, Mannerism)
+- Size: 6192 images
 
 ---
 
@@ -20,6 +22,7 @@ This project combines multiple sources to study Renaissance-style visual pattern
 - Source: https://data.rijksmuseum.nl/
 - Description: Cultural heritage collection with API access
 - Used for: European paintings from the Renaissance period
+- Size: 87 images
 
 ---
 
@@ -27,6 +30,7 @@ This project combines multiple sources to study Renaissance-style visual pattern
 - Source: https://www.reddit.com/r/AccidentalRenaissance/
 - Description: Modern photographs resembling Renaissance compositions
 - Used for: "Accidental Renaissance" dataset (modern domain)
+- Size: 1661 images
 
 ---
 
