@@ -93,6 +93,7 @@ def main():
     )
 
     print("\n Training model")
+    
     for epoch in range(EPOCHS):
         print(f"\n Epoch {epoch+1}/{EPOCHS}")
 
