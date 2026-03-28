@@ -1,13 +1,13 @@
 import torch
-import pandas as pd
 
 from src.data_processing.metadata import create_metadata_csv
 from src.data_processing.transforms import Transform
 from src.data_processing.stats import compute_and_save_stats
 
 from src.modeling.dataset import Dataset, get_dataloaders
-from src.modeling.model import get_renaissance_model
+from src.modeling.model import get_model
 from src.modeling.trainer import Trainer
+from src.modeling.utils.config_loader import load_config
 
 
 # PARAMS
@@ -23,7 +23,13 @@ DATA_DIRS = {
 BALANCING_METHOD = "none"
 # options: "none", "weighted_loss", "sampler"
 
-EPOCHS = 10
+CONFIG = load_config("configs/models/resnet.yaml")
+# options: "resnet.yaml", "vit.yaml"
+
+MODEL_NAME = CONFIG["model_name"]
+EPOCHS = CONFIG["training"]["epochs"]
+BATCH_SIZE = CONFIG["training"]["batch_size"]
+LR = CONFIG["training"]["lr"]
 
 
 def main():
@@ -51,12 +57,13 @@ def main():
         df,
         train_transform,
         val_transform,
+        BATCH_SIZE,
         use_sampler=use_sampler
     )
 
         
     print("\n Getting model")
-    model = get_renaissance_model(num_classes=3)
+    model = get_model(model_name=MODEL_NAME, num_classes=3)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -81,7 +88,7 @@ def main():
         print("\n Using standard CrossEntropyLoss")
         criterion = torch.nn.CrossEntropyLoss()
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
     trainer = Trainer(
         model=model,
@@ -93,7 +100,7 @@ def main():
     )
 
     print("\n Training model")
-    
+
     for epoch in range(EPOCHS):
         print(f"\n Epoch {epoch+1}/{EPOCHS}")
 
