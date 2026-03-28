@@ -1,0 +1,11 @@
+torch
+torchvision
+pandas
+numpy
+scikit-learn
+tqdm
+Pillow
+PyYAML
+requests
+beautifulsoup4
+ImageHash
