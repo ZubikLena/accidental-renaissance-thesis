@@ -8,6 +8,7 @@ from src.modeling.dataset import Dataset, get_dataloaders
 from src.modeling.model import get_model
 from src.modeling.trainer import Trainer
 from src.modeling.utils.config_loader import load_config
+from src.modeling.utils.criterion import get_criterion
 
 
 # PARAMS
@@ -20,16 +21,18 @@ DATA_DIRS = {
         }
     }
 
-BALANCING_METHOD = "none"
-# options: "none", "weighted_loss", "sampler"
 
-CONFIG = load_config("configs/models/resnet.yaml")
-# options: "resnet.yaml", "vit.yaml"
+CONFIG = load_config("configs/exp.yaml")
 
-MODEL_NAME = CONFIG["model_name"]
-EPOCHS = CONFIG["training"]["epochs"]
-BATCH_SIZE = CONFIG["training"]["batch_size"]
-LR = CONFIG["training"]["lr"]
+MODEL_NAME = CONFIG["model"]["name"]
+TASK = CONFIG["task"]
+BALANCING_METHOD = CONFIG["balancing"]
+
+training = CONFIG["training"]
+EPOCHS = training["epochs"]
+BATCH_SIZE = training["batch_size"]
+LR = training["lr"]
+BINARY_SETUP = CONFIG.get("binary_setup", None)
 
 
 def main():
@@ -58,35 +61,18 @@ def main():
         train_transform,
         val_transform,
         BATCH_SIZE,
-        use_sampler=use_sampler
+        use_sampler=use_sampler,
+        task=TASK,
+        binary_setup=BINARY_SETUP
     )
 
         
     print("\n Getting model")
-    model = get_model(model_name=MODEL_NAME, num_classes=3)
+    model = get_model(model_name=MODEL_NAME, num_classes=2 if TASK == "binary" else 3)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    if BALANCING_METHOD == "weighted_loss":
-        class_counts = df["label"].value_counts()
-
-        counts = torch.tensor([
-            class_counts.get("normal", 1),
-            class_counts.get("accidental", 1),
-            class_counts.get("paintings", 1)
-        ], dtype=torch.float)
-
-        weights = 1.0 / counts
-        weights = weights / weights.sum()
-        weights = weights.to(device)
-
-        print("\n Using Weighted Loss:", weights)
-
-        criterion = torch.nn.CrossEntropyLoss(weight=weights)
-
-    else:
-        print("\n Using standard CrossEntropyLoss")
-        criterion = torch.nn.CrossEntropyLoss()
+    criterion = get_criterion(df, TASK, BALANCING_METHOD, device, binary_setup=BINARY_SETUP)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
