@@ -2,6 +2,7 @@
 # DATA
 # =========================
 
+# ignore large data folders
 data/raw/
 data/*
 *.csv
@@ -9,4 +10,18 @@ data/*
 # keep only the sample
 !data/sample/
 !data/sample/**
+
+# ignore cache 
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ignore virtual environment and env files
+.env/
+venv/
+
+
+
+
 
