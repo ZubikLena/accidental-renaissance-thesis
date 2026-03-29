@@ -1,18 +1,17 @@
-model:
-  name: resnet
-  # name: vit
+model_name: resnet
+# model options: resnet or vit
 
 task: binary
-# task: multiclass
+# task options: binary or multiclass
 
 # if binary, specify which classes are positive and negative
-# binary_setup:
-#   positive: ["accidental"]
-#   negative: ["normal", "paintings"]
+binary_setup:
+  positive: ["accidental"]
+  negative: ["normal", "paintings"]
 
 balancing: none
-# balancing: weighted_loss
-# balancing: sampler
+# balancing options: none, sampler or weighted_loss
+
 
 # for resnet preferred
 training:

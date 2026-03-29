@@ -24,7 +24,7 @@ DATA_DIRS = {
 
 CONFIG = load_config("configs/exp.yaml")
 
-MODEL_NAME = CONFIG["model"]["name"]
+MODEL_NAME = CONFIG["model_name"]
 TASK = CONFIG["task"]
 BALANCING_METHOD = CONFIG["balancing"]
 
@@ -61,8 +61,8 @@ def main():
         train_transform,
         val_transform,
         BATCH_SIZE,
-        use_sampler=use_sampler,
         task=TASK,
+        balancing=use_sampler,
         binary_setup=BINARY_SETUP
     )
 
