@@ -5,14 +5,12 @@ def get_loader_distribution(loader, max_batches=None):
 
     for i, (_, labels) in enumerate(loader):
         labels = labels.numpy()
-        print("dupa_")
 
         for l in labels:
             counter[int(l)] += 1
 
         if max_batches and i >= max_batches:
             break
-    print("dupa_2")
     return counter
 
 def print_distribution(dist, label_map, task):

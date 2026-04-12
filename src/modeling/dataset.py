@@ -103,7 +103,6 @@ def get_dataloaders(
         transform=val_transform,
         label_map=label_map
     )
-    print("DUPA_5")
 
     if balancing == "sampler":
         sampler = build_sampler(train_df)
@@ -113,21 +112,18 @@ def get_dataloaders(
             batch_size=batch_size,
             sampler=sampler
         )
-        print("DUPA_54")
     else:
         train_loader = DataLoader(
             train_dataset,
             batch_size=batch_size,
             shuffle=True
         )
-        print("DUPA_52")
 
     val_loader = DataLoader(
         val_dataset,
         batch_size=batch_size,
         shuffle=False
     )
-    print("DUPA_5")
 
 
     return train_loader, val_loader, train_df, val_df
