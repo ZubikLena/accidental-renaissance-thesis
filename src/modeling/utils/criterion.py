@@ -2,8 +2,6 @@ import torch
 
 def get_criterion(df, task, balancing, device, binary_setup=None):
 
-
-
     if balancing == "weighted_loss":
 
         if task == "binary":

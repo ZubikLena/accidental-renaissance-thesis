@@ -3,11 +3,6 @@ from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 from PIL import Image
 from sklearn.model_selection import train_test_split
 
-import torch
-from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
-from PIL import Image
-from sklearn.model_selection import train_test_split
-
 
 def get_label_map(task, binary_setup=None):
 
@@ -19,22 +14,11 @@ def get_label_map(task, binary_setup=None):
         }
 
     elif task == "binary":
-
-        if binary_setup is None:
-            raise ValueError("binary_setup must be provided for binary task")
-
-        label_map = {}
-
-        for cls in binary_setup["positive"]:
-            label_map[cls] = 1
-
-        for cls in binary_setup["negative"]:
-            label_map[cls] = 0
-
-        return label_map
+        return None
 
     else:
         raise ValueError(f"Unknown task: {task}")
+
 
 class Dataset(Dataset):
 
@@ -54,7 +38,10 @@ class Dataset(Dataset):
         except:
             image = Image.new("RGB", (224, 224))
 
-        label = self.label_map[row["label"]]
+        if self.label_map:
+            label = self.label_map[row["label"]]
+        else:
+            label = int(row["label"])
 
         if self.transform:
             image = self.transform(image)
@@ -62,15 +49,9 @@ class Dataset(Dataset):
         return image, label
 
 
+def build_sampler(train_df):
 
-def build_sampler(train_df, task, binary_setup=None):
-
-    if task == "binary":
-        labels = train_df["label"].apply(
-            lambda x: 1 if x in binary_setup["positive"] else 0
-        )
-    else:
-        labels = train_df["label"]
+    labels = train_df["label"]
 
     class_counts = labels.value_counts()
 
@@ -89,17 +70,28 @@ def get_dataloaders(
     binary_setup=None
 ):
 
-    # Split
+    if task == "binary":
+        if binary_setup is None:
+            raise ValueError("binary_setup must be provided for binary task")
+
+        pos = binary_setup["positive"]
+        neg = binary_setup["negative"]
+
+        df = df[df["label"].isin(pos + neg)].copy()
+
+        df["label"] = df["label"].apply(lambda x: 1 if x in pos else 0)
+
     train_df, val_df = train_test_split(
         df,
         test_size=0.2,
-        stratify=df["label"]
+        stratify=df["label"],
+        random_state=42
     )
 
-    # Label mapping
-    label_map = get_label_map(task, binary_setup=binary_setup)
 
-    # Datasets
+    label_map = None if task == "binary" else get_label_map(task)
+
+
     train_dataset = Dataset(
         train_df,
         transform=train_transform,
@@ -111,27 +103,31 @@ def get_dataloaders(
         transform=val_transform,
         label_map=label_map
     )
+    print("DUPA_5")
 
-    # Sampler
     if balancing == "sampler":
-        sampler = build_sampler(train_df, task)
+        sampler = build_sampler(train_df)
 
         train_loader = DataLoader(
             train_dataset,
             batch_size=batch_size,
             sampler=sampler
         )
+        print("DUPA_54")
     else:
         train_loader = DataLoader(
             train_dataset,
             batch_size=batch_size,
             shuffle=True
         )
+        print("DUPA_52")
 
     val_loader = DataLoader(
         val_dataset,
         batch_size=batch_size,
         shuffle=False
     )
+    print("DUPA_5")
 
-    return train_loader, val_loader
+
+    return train_loader, val_loader, train_df, val_df
