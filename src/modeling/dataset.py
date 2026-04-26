@@ -3,29 +3,11 @@ from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 from PIL import Image
 from sklearn.model_selection import train_test_split
 
-
-def get_label_map(task, binary_setup=None):
-
-    if task == "multiclass":
-        return {
-            "normal": 0,
-            "accidental": 1,
-            "paintings": 2
-        }
-
-    elif task == "binary":
-        return None
-
-    else:
-        raise ValueError(f"Unknown task: {task}")
-
-
 class Dataset(Dataset):
 
-    def __init__(self, dataframe, transform=None, label_map=None):
+    def __init__(self, dataframe, transform=None):
         self.df = dataframe.reset_index(drop=True)
         self.transform = transform
-        self.label_map = label_map
 
     def __len__(self):
         return len(self.df)
@@ -38,48 +20,54 @@ class Dataset(Dataset):
         except:
             image = Image.new("RGB", (224, 224))
 
-        if self.label_map:
-            label = self.label_map[row["label"]]
-        else:
-            label = int(row["label"])
+        label = int(row["label"])
 
         if self.transform:
             image = self.transform(image)
 
-        return image, label
+        return image, torch.tensor(label, dtype=torch.long)
 
 
 def build_sampler(train_df):
-
     labels = train_df["label"]
-
     class_counts = labels.value_counts()
-
     weights = labels.map(lambda x: 1.0 / class_counts[x]).values
-
     return WeightedRandomSampler(weights, num_samples=len(weights))
-
 
 def get_dataloaders(
     df,
     train_transform,
     val_transform,
-    batch_size=32,
-    task="multiclass",
-    balancing="none",
-    binary_setup=None
+    batch_size,
+    task,
+    balancing,
+    binary_setup
 ):
 
-    if task == "binary":
-        if binary_setup is None:
-            raise ValueError("binary_setup must be provided for binary task")
 
+    if task == "binary":
         pos = binary_setup["positive"]
         neg = binary_setup["negative"]
 
         df = df[df["label"].isin(pos + neg)].copy()
-
         df["label"] = df["label"].apply(lambda x: 1 if x in pos else 0)
+
+    elif task == "multiclass":
+        label_map = {
+            "normal": 0,
+            "accidental": 1,
+            "paintings": 2
+        }
+
+        df["label"] = df["label"].str.strip().str.lower()
+        df["label"] = df["label"].map(label_map)
+
+        if df["label"].isnull().any():
+            raise ValueError("Some labels could not be mapped to integers")
+
+    else:
+        raise ValueError(f"Unknown task: {task}")
+
 
     train_df, val_df = train_test_split(
         df,
@@ -88,21 +76,8 @@ def get_dataloaders(
         random_state=42
     )
 
-
-    label_map = None if task == "binary" else get_label_map(task)
-
-
-    train_dataset = Dataset(
-        train_df,
-        transform=train_transform,
-        label_map=label_map
-    )
-
-    val_dataset = Dataset(
-        val_df,
-        transform=val_transform,
-        label_map=label_map
-    )
+    train_dataset = Dataset(train_df, transform=train_transform)
+    val_dataset = Dataset(val_df, transform=val_transform)
 
     if balancing == "sampler":
         sampler = build_sampler(train_df)
@@ -124,6 +99,5 @@ def get_dataloaders(
         batch_size=batch_size,
         shuffle=False
     )
-
 
     return train_loader, val_loader, train_df, val_df

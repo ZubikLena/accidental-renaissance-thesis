@@ -7,7 +7,7 @@ from src.data_processing.metadata import create_metadata_csv
 from src.data_processing.transforms import Transform
 from src.data_processing.stats import compute_and_save_stats
 
-from src.modeling.dataset import Dataset, get_dataloaders, get_label_map
+from src.modeling.dataset import Dataset, get_dataloaders
 from src.modeling.model import get_model
 from src.modeling.trainer import Trainer
 from src.modeling.utils.config_loader import load_config
@@ -53,6 +53,7 @@ def main():
     print(df["label"].value_counts())
 
     basic_transform = Transform.get_basic_transform()
+
     dataset = Dataset(df, transform=basic_transform)
     stats = compute_and_save_stats(dataset)
 
@@ -83,10 +84,6 @@ def main():
     print(train_df["label"].value_counts())
     print(val_df["label"].value_counts())
     print("DEBUG: Finished printing label counts")
-
-    print("DEBUG: About to call get_label_map")
-    label_map = get_label_map(TASK, BINARY_SETUP)
-    print("DEBUG: get_label_map returned:", label_map)
 
     print("\n Getting model")
     model = get_model(model_name=MODEL_NAME, num_classes=2 if TASK == "binary" else 3)
