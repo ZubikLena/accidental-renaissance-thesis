@@ -34,7 +34,7 @@ class Trainer:
 
     def validate(self):
         self.model.eval()
-
+        total_loss = 0
         correct = 0
         total = 0
 
@@ -44,9 +44,15 @@ class Trainer:
                 labels = labels.to(self.device)
 
                 outputs = self.model(images)
+                loss = self.criterion(outputs, labels)
+
+                total_loss += loss.item()
+
                 _, preds = torch.max(outputs, 1)
-
-                total += labels.size(0)
                 correct += (preds == labels).sum().item()
+                total += labels.size(0)
 
-        return 100 * correct / total
+        avg_loss = total_loss / len(self.val_loader)
+        acc = 100 * correct / total
+
+        return avg_loss, acc

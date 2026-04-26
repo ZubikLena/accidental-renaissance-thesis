@@ -1,4 +1,7 @@
 import torch
+import os
+import json
+from datetime import datetime
 
 from src.data_processing.metadata import create_metadata_csv
 from src.data_processing.transforms import Transform
@@ -24,6 +27,12 @@ DATA_DIRS = {
 
 
 CONFIG = load_config("configs/exp.yaml")
+timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+
+exp_name = f"{CONFIG['model_name']}_{CONFIG['task']}_{CONFIG['balancing']}_{timestamp}"
+
+output_dir = os.path.join("outputs", exp_name)
+os.makedirs(output_dir, exist_ok=True)
 
 MODEL_NAME = CONFIG["model_name"]
 TASK = CONFIG["task"]
@@ -98,15 +107,37 @@ def main():
     )
 
     print("\n Training model")
+    history = {
+        "train_loss": [],
+        "val_loss": [],
+        "val_acc": []
+    }
+
+    best_acc = 0.0
 
     for epoch in range(EPOCHS):
         print(f"\n Epoch {epoch+1}/{EPOCHS}")
 
-        loss = trainer.train_epoch()
-        acc = trainer.validate()
+        train_loss = trainer.train_epoch()
+        val_loss, val_acc = trainer.validate()
 
-        print(f"Loss: {loss:.4f} | Accuracy: {acc:.2f}%")
+        history["train_loss"].append(train_loss)
+        history["val_loss"].append(val_loss)
+        history["val_acc"].append(val_acc)
 
+        print(f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.2f}%")
+
+        if val_acc > best_acc:
+            best_acc = val_acc
+            torch.save(
+                model.state_dict(),
+                os.path.join(output_dir, "best_model.pt")
+            )
+            print("Saved best model")
+
+    with open(os.path.join(output_dir, "training_history.json"), "w") as f:
+        json.dump(history, f, indent=4)
+    
     print("\n Training complete!")
 
 
