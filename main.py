@@ -55,10 +55,6 @@ def main():
     print("\n Class distribution:")
     print(df["label"].value_counts())
 
-    basic_transform = Transform.get_basic_transform()
-
-    dataset = Dataset(df, transform=basic_transform)
-
     train_transform = Transform.get_calibrated_transform(
         IMAGENET_MEAN, IMAGENET_STD, train=True
     )
@@ -67,25 +63,37 @@ def main():
         IMAGENET_MEAN, IMAGENET_STD, train=False
     )
 
-    use_sampler = (BALANCING_METHOD == "sampler")
-    print("\nDF SIZE BEFORE DATALOADER:", len(df))
+    print(f"\nDF SIZE BEFORE DATALOADER: {len(df)}")
+    print(f"Using balancing method: {BALANCING_METHOD}")
 
-    print("DEBUG: About to call get_dataloaders")
-    train_loader, val_loader, train_df, val_df = get_dataloaders(
+    train_loader, val_loader, test_loader, train_df, val_df, test_df = get_dataloaders(
         df,
         train_transform,
         val_transform,
         BATCH_SIZE,
         task=TASK,
-        balancing=use_sampler,
+        balancing=BALANCING_METHOD,
         binary_setup=BINARY_SETUP
     )
-    print("DEBUG: get_dataloaders returned successfully")
 
-    print("DEBUG: About to print label counts")
+    print("\nData splits:")
+    print(f"Train set ({len(train_df)} samples):")
     print(train_df["label"].value_counts())
+    print(f"Sample paths: {train_df['path'].head(3).tolist()}")
+
+    print(f"\nVal set ({len(val_df)} samples):")
     print(val_df["label"].value_counts())
-    print("DEBUG: Finished printing label counts")
+    print(f"Sample paths: {val_df['path'].head(3).tolist()}")
+
+    print(f"\nTest set ({len(test_df)} samples):")
+    print(test_df["label"].value_counts())
+    print(f"Sample paths: {test_df['path'].head(3).tolist()}")
+
+    # Save split details
+    train_df.to_csv(os.path.join(output_dir, "train_split.csv"), index=False)
+    val_df.to_csv(os.path.join(output_dir, "val_split.csv"), index=False)
+    test_df.to_csv(os.path.join(output_dir, "test_split.csv"), index=False)
+    print(f"\nSaved split details to {output_dir}")
 
     print("\n Getting model")
     model = get_model(model_name=MODEL_NAME, num_classes=2 if TASK == "binary" else 3)

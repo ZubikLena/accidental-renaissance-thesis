@@ -31,8 +31,8 @@ class Dataset(Dataset):
 def build_sampler(train_df):
     labels = train_df["label"]
     class_counts = labels.value_counts()
-    weights = labels.map(lambda x: 1.0 / class_counts[x]).values
-    return WeightedRandomSampler(weights, num_samples=len(weights))
+    weights = 1.0 / labels.map(class_counts)
+    return WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
 
 def get_dataloaders(
     df,
@@ -69,15 +69,23 @@ def get_dataloaders(
         raise ValueError(f"Unknown task: {task}")
 
 
-    train_df, val_df = train_test_split(
+    train_df, temp_df = train_test_split(
         df,
-        test_size=0.2,
+        test_size=0.3,
         stratify=df["label"],
+        random_state=42
+    )
+
+    val_df, test_df = train_test_split(
+        temp_df,
+        test_size=0.5,
+        stratify=temp_df["label"],
         random_state=42
     )
 
     train_dataset = Dataset(train_df, transform=train_transform)
     val_dataset = Dataset(val_df, transform=val_transform)
+    test_dataset = Dataset(test_df, transform=val_transform)  # Use val_transform for test, no augmentation
 
     if balancing == "sampler":
         sampler = build_sampler(train_df)
@@ -100,4 +108,10 @@ def get_dataloaders(
         shuffle=False
     )
 
-    return train_loader, val_loader, train_df, val_df
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False
+    )
+
+    return train_loader, val_loader, test_loader, train_df, val_df, test_df
