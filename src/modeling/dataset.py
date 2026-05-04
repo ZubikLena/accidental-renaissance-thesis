@@ -41,47 +41,56 @@ def get_dataloaders(
     batch_size,
     task,
     balancing,
-    binary_setup
+    binary_setup,
+    global_split_indices=None
 ):
 
+    def apply_task_filter(subset_df):
+        if task == "binary":
+            pos = binary_setup["positive"]
+            neg = binary_setup["negative"]
 
-    if task == "binary":
-        pos = binary_setup["positive"]
-        neg = binary_setup["negative"]
+            subset_df = subset_df[subset_df["label"].isin(pos + neg)].copy()
+            subset_df["label"] = subset_df["label"].apply(lambda x: 1 if x in pos else 0)
 
-        df = df[df["label"].isin(pos + neg)].copy()
-        df["label"] = df["label"].apply(lambda x: 1 if x in pos else 0)
+        elif task == "multiclass":
+            label_map = {
+                "normal": 0,
+                "accidental": 1,
+                "paintings": 2
+            }
 
-    elif task == "multiclass":
-        label_map = {
-            "normal": 0,
-            "accidental": 1,
-            "paintings": 2
-        }
+            subset_df["label"] = subset_df["label"].str.strip().str.lower()
+            subset_df["label"] = subset_df["label"].map(label_map)
 
-        df["label"] = df["label"].str.strip().str.lower()
-        df["label"] = df["label"].map(label_map)
+            if subset_df["label"].isnull().any():
+                raise ValueError("Some labels could not be mapped to integers")
 
-        if df["label"].isnull().any():
-            raise ValueError("Some labels could not be mapped to integers")
+        else:
+            raise ValueError(f"Unknown task: {task}")
 
+        return subset_df
+
+    if global_split_indices is not None:
+        train_df = apply_task_filter(df.loc[global_split_indices["train"]].copy())
+        val_df = apply_task_filter(df.loc[global_split_indices["val"]].copy())
+        test_df = apply_task_filter(df.loc[global_split_indices["test"]].copy())
     else:
-        raise ValueError(f"Unknown task: {task}")
+        df = apply_task_filter(df)
 
+        train_df, temp_df = train_test_split(
+            df,
+            test_size=0.3,
+            stratify=df["label"],
+            random_state=42
+        )
 
-    train_df, temp_df = train_test_split(
-        df,
-        test_size=0.3,
-        stratify=df["label"],
-        random_state=42
-    )
-
-    val_df, test_df = train_test_split(
-        temp_df,
-        test_size=0.5,
-        stratify=temp_df["label"],
-        random_state=42
-    )
+        val_df, test_df = train_test_split(
+            temp_df,
+            test_size=0.5,
+            stratify=temp_df["label"],
+            random_state=42
+        )
 
     train_dataset = Dataset(train_df, transform=train_transform)
     val_dataset = Dataset(val_df, transform=val_transform)
