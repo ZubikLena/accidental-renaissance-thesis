@@ -38,8 +38,6 @@ exp_name = f"{CONFIG['model_name']}_{CONFIG['task']}_{CONFIG['balancing']}_{time
 output_dir = os.path.join("outputs", exp_name)
 os.makedirs(output_dir, exist_ok=True)
 
-GLOBAL_SPLIT_PATH = os.path.join("outputs", f"global_splits_{TASK}.json")
-
 MODEL_NAME = CONFIG["model_name"]
 TASK = CONFIG["task"]
 BALANCING_METHOD = CONFIG["balancing"]
@@ -51,6 +49,8 @@ LR = training["lr"]
 EARLY_STOPPING_PATIENCE = training.get("early_stopping_patience", None)
 EARLY_STOPPING_MIN_DELTA = training.get("early_stopping_min_delta", 0.0)
 BINARY_SETUP = CONFIG.get("binary_setup", None)
+
+GLOBAL_SPLIT_PATH = os.path.join("outputs", f"global_splits_{TASK}.json")
 
 
 def load_or_create_global_split(df, split_path, task, binary_setup, val_ratio=0.15, test_ratio=0.15, random_state=42):
