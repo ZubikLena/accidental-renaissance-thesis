@@ -17,6 +17,10 @@ __pycache__/
 *.pyo
 *.pyd
 
+
+# ignore cache 
+outputs/*
+
 # ignore virtual environment and env files
 .env/
 venv/
