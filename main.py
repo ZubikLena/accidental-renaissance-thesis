@@ -5,13 +5,16 @@ from datetime import datetime
 
 from src.data_processing.metadata import create_metadata_csv
 from src.data_processing.transforms import Transform
-from src.data_processing.stats import compute_and_save_stats
 
 from src.modeling.dataset import Dataset, get_dataloaders
 from src.modeling.model import get_model
 from src.modeling.trainer import Trainer
 from src.modeling.utils.config_loader import load_config
 from src.modeling.utils.criterion import get_criterion
+
+# ImageNet normalization stats for pretrained models
+IMAGENET_MEAN = [0.485, 0.456, 0.406]
+IMAGENET_STD = [0.229, 0.224, 0.225]
 
 # PARAMS
 DATA_DIRS = {
@@ -55,14 +58,13 @@ def main():
     basic_transform = Transform.get_basic_transform()
 
     dataset = Dataset(df, transform=basic_transform)
-    stats = compute_and_save_stats(dataset)
 
     train_transform = Transform.get_calibrated_transform(
-        stats["mean"], stats["std"], train=True
+        IMAGENET_MEAN, IMAGENET_STD, train=True
     )
 
     val_transform = Transform.get_calibrated_transform(
-        stats["mean"], stats["std"], train=False
+        IMAGENET_MEAN, IMAGENET_STD, train=False
     )
 
     use_sampler = (BALANCING_METHOD == "sampler")
