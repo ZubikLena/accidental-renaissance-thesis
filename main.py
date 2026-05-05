@@ -52,6 +52,22 @@ BINARY_SETUP = CONFIG.get("binary_setup", None)
 
 GLOBAL_SPLIT_PATH = os.path.join("outputs", f"global_splits_{TASK}.json")
 
+FREEZE_PRETRAINED = training.get("freeze_pretrained", False)
+
+
+def freeze_pretrained_backbone(model, model_name):
+    for param in model.parameters():
+        param.requires_grad = False
+
+    if model_name == "resnet":
+        for param in model.fc.parameters():
+            param.requires_grad = True
+    elif model_name == "vit":
+        for param in model.heads.head.parameters():
+            param.requires_grad = True
+    else:
+        raise ValueError(f"Unknown model for freezing: {model_name}")
+
 
 def load_or_create_global_split(df, split_path, task, binary_setup, val_ratio=0.15, test_ratio=0.15, random_state=42):
     if os.path.exists(split_path):
@@ -167,6 +183,10 @@ def main():
     print("\n Getting model")
     model = get_model(model_name=MODEL_NAME, num_classes=2 if TASK == "binary" else 3)
 
+    if FREEZE_PRETRAINED:
+        print("Freezing pretrained backbone, training only the classification head")
+        freeze_pretrained_backbone(model, MODEL_NAME)
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     criterion = get_criterion(train_df, TASK, BALANCING_METHOD, device, binary_setup=BINARY_SETUP)
@@ -179,7 +199,10 @@ def main():
     if patience is not None:
         print(f"Using early stopping with patience={patience}, min_delta={min_delta}")
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+    optimizer = torch.optim.Adam(
+        filter(lambda p: p.requires_grad, model.parameters()),
+        lr=LR
+    )
 
     trainer = Trainer(
         model=model,
