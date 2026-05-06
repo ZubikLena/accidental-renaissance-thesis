@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 import torch
 from sklearn.metrics import f1_score
 from torch import nn
+from tqdm.auto import tqdm
 
 from src.config import load_config
 from src.data_pipeline import build_dataloaders, save_split_records
@@ -73,20 +74,22 @@ def train_epoch(
     all_targets = []
     steps = 0
 
-    for images, targets in loader:
-        images = images.to(device, non_blocking=True)
-        targets = targets.to(device, non_blocking=True)
+    with tqdm(loader, desc="Train", unit="batch", leave=False) as progress:
+        for images, targets in progress:
+            images = images.to(device, non_blocking=True)
+            targets = targets.to(device, non_blocking=True)
 
-        optimizer.zero_grad()
-        outputs = model(images)
-        loss = criterion(outputs, targets)
-        loss.backward()
-        optimizer.step()
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = criterion(outputs, targets)
+            loss.backward()
+            optimizer.step()
 
-        running_loss += loss.item()
-        all_preds.append(outputs.argmax(dim=1).cpu())
-        all_targets.append(targets.cpu())
-        steps += 1
+            running_loss += loss.item()
+            all_preds.append(outputs.argmax(dim=1).cpu())
+            all_targets.append(targets.cpu())
+            steps += 1
+            progress.set_postfix(loss=loss.item())
 
     if steps == 0:
         return {"loss": 0.0, "accuracy": 0.0, "f1": 0.0}
@@ -114,16 +117,18 @@ def evaluate_epoch(
     steps = 0
 
     with torch.no_grad():
-        for images, targets in loader:
-            images = images.to(device, non_blocking=True)
-            targets = targets.to(device, non_blocking=True)
-            outputs = model(images)
-            loss = criterion(outputs, targets)
+        with tqdm(loader, desc="Valid", unit="batch", leave=False) as progress:
+            for images, targets in progress:
+                images = images.to(device, non_blocking=True)
+                targets = targets.to(device, non_blocking=True)
+                outputs = model(images)
+                loss = criterion(outputs, targets)
 
-            running_loss += loss.item()
-            all_preds.append(outputs.argmax(dim=1).cpu())
-            all_targets.append(targets.cpu())
-            steps += 1
+                running_loss += loss.item()
+                all_preds.append(outputs.argmax(dim=1).cpu())
+                all_targets.append(targets.cpu())
+                steps += 1
+                progress.set_postfix(loss=loss.item())
 
     if steps == 0:
         return {"loss": 0.0, "accuracy": 0.0, "f1": 0.0}
@@ -155,6 +160,8 @@ def run_experiment(config_path: str) -> None:
     optimizer = create_optimizer(config, model)
     criterion = create_criterion(config, class_weights, device)
 
+    print("Data loaders and model built successfully.")
+
     num_epochs = int(training_config.get("num_epochs", 10))
     output_dir = training_config.get("output_dir", "outputs/models")
     best_metric: Optional[float] = None
@@ -180,6 +187,8 @@ def run_experiment(config_path: str) -> None:
         save_split_records(split_records["test"], Path(split_dir) / "test_records.csv")
         print(f"Saved test split records to: {Path(split_dir) / 'test_records.csv'}")
 
+    print("Starting training loop...")
+
     def is_improved(current: float, best: Optional[float], mode: str, min_delta: float) -> bool:
         if best is None:
             return True
@@ -188,6 +197,7 @@ def run_experiment(config_path: str) -> None:
         return current > best + min_delta
 
     for epoch in range(1, num_epochs + 1):
+        print(f"Starting epoch {epoch}/{num_epochs}")
         start_time = time.time()
         train_metrics = train_epoch(model, data_loaders["train"], optimizer, criterion, device, average=metrics_average)
         val_metrics = evaluate_epoch(model, data_loaders["val"], criterion, device, average=metrics_average) if data_loaders.get("val") else {}

@@ -246,21 +246,22 @@ def build_dataloaders(config: Dict[str, Any]) -> Tuple[Dict[str, DataLoader], Di
     test_dataset = ImagePathDataset(test_records, label_to_index, transform=eval_transform) if test_records else None
 
     train_sampler = build_sampler(train_records, label_to_index, balancing)
+    pin_memory = torch.cuda.is_available()
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         sampler=train_sampler,
         shuffle=(train_sampler is None),
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=pin_memory,
     )
     val_loader = (
-        DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+        DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin_memory)
         if val_dataset is not None
         else None
     )
     test_loader = (
-        DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+        DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin_memory)
         if test_dataset is not None
         else None
     )

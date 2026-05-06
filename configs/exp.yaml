@@ -47,7 +47,7 @@ training:
   batch_size: 32
   num_epochs: 10
   device: cuda
-  num_workers: 4
+  num_workers: 0
   output_dir: outputs/models
   save_split_records: true
   split_output_dir: outputs/splits
