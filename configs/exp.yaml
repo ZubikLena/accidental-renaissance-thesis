@@ -29,9 +29,9 @@ augmentation:
     hue: 0.1
   auto_augment: false
 balancing:
-  strategy: none #`none`, `downsample`, `oversample`, `class_weight`
+  strategy: class_weight #`none`, `downsample`, `oversample`, `class_weight`
 model:
-  name: resnet50
+  name: vit
   pretrained: true
   freeze_backbone: true
   head_hidden: 512
@@ -54,7 +54,7 @@ training:
   metrics:
     f1_average: macro
   early_stopping:
-    enabled: true
+    enabled: false
     monitor: val_loss
     mode: min
     patience: 3
