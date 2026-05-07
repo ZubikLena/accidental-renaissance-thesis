@@ -29,7 +29,7 @@ augmentation:
     hue: 0.1
   auto_augment: false
 balancing:
-  strategy: class_weight #`none`, `downsample`, `oversample`, `class_weight`
+  strategy: none #`none`, `downsample`, `oversample`, `class_weight`
 model:
   name: resnet50
   pretrained: true
