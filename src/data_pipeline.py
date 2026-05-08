@@ -98,14 +98,14 @@ def split_records(records: List[Dict[str, str]], train_ratio: float, val_ratio: 
 
     labels = [record["label"] for record in records]
     if test_ratio > 0:
-        train_val_records, test_records = train_test_split(
+        train_val_records, rq1_test_records = train_test_split(
             records,
             test_size=test_ratio,
             stratify=labels,
             random_state=seed,
         )
     else:
-        train_val_records, test_records = records, []
+        train_val_records, rq1_test_records = records, []
 
     if val_ratio > 0:
         relative_val = val_ratio / (train_ratio + val_ratio)
@@ -118,7 +118,7 @@ def split_records(records: List[Dict[str, str]], train_ratio: float, val_ratio: 
     else:
         train_records, val_records = train_val_records, []
 
-    return train_records, val_records, test_records
+    return train_records, val_records, rq1_test_records
 
 
 def build_label_index(records: Iterable[Dict[str, str]]) -> Dict[str, int]:
@@ -228,7 +228,7 @@ def build_dataloaders(config: Dict[str, Any]) -> Tuple[Dict[str, DataLoader], Di
     if selected_labels:
         records = filter_records_by_labels(records, selected_labels)
 
-    train_records, val_records, test_records = split_records(records, train_ratio, val_ratio, test_ratio, seed)
+    train_records, val_records, rq1_test_records = split_records(records, train_ratio, val_ratio, test_ratio, seed)
 
     if balancing == "downsample":
         train_records = downsample_records(train_records, seed)
@@ -243,7 +243,7 @@ def build_dataloaders(config: Dict[str, Any]) -> Tuple[Dict[str, DataLoader], Di
 
     train_dataset = ImagePathDataset(train_records, label_to_index, transform=train_transform)
     val_dataset = ImagePathDataset(val_records, label_to_index, transform=eval_transform) if val_records else None
-    test_dataset = ImagePathDataset(test_records, label_to_index, transform=eval_transform) if test_records else None
+    test_dataset = ImagePathDataset(rq1_test_records, label_to_index, transform=eval_transform) if rq1_test_records else None
 
     train_sampler = build_sampler(train_records, label_to_index, balancing)
     pin_memory = torch.cuda.is_available()
@@ -271,5 +271,5 @@ def build_dataloaders(config: Dict[str, Any]) -> Tuple[Dict[str, DataLoader], Di
         {"train": train_loader, "val": val_loader, "test": test_loader},
         class_names,
         class_weights,
-        {"train": train_records, "val": val_records, "test": test_records},
+        {"train": train_records, "val": val_records, "test": rq1_test_records},
     )

@@ -184,8 +184,8 @@ def run_experiment(config_path: str) -> None:
     split_save = training_config.get("save_split_records", True)
     split_dir = training_config.get("split_output_dir", os.path.join(output_dir, "splits"))
     if split_save:
-        save_split_records(split_records["test"], Path(split_dir) / "test_records.csv")
-        print(f"Saved test split records to: {Path(split_dir) / 'test_records.csv'}")
+        save_split_records(split_records["test"], Path(split_dir) / "rq1_test_records.csv")
+        print(f"Saved test split records to: {Path(split_dir) / 'rq1_test_records.csv'}")
 
     print("Starting training loop...")
 
